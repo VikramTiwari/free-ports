@@ -94,7 +94,7 @@ class PortManagerMenuBar {
                     port: port,
                     processName: processName,
                     processID: processID,
-                    `protocol`: "TCP",
+                    protocol: "TCP",
                     state: state,
                     localAddress: localAddress,
                     foreignAddress: "*"
@@ -115,7 +115,7 @@ class PortManagerMenuBar {
                     port: port,
                     processName: processName,
                     processID: processID,
-                    `protocol`: "TCP",
+                    protocol: "TCP",
                     state: state,
                     localAddress: localAddress,
                     foreignAddress: "\(foreignAddress):\(foreignPort)"
@@ -134,7 +134,7 @@ class PortManagerMenuBar {
                     port: port,
                     processName: processName,
                     processID: processID,
-                    `protocol`: "TCP",
+                    protocol: "TCP",
                     state: "LISTEN",
                     localAddress: localAddress,
                     foreignAddress: "*"
@@ -186,6 +186,7 @@ class PortManagerMenuBar {
 }
 
 // Main application class
+@MainActor
 class AppDelegateMenuBar: NSObject, NSApplicationDelegate {
     var statusBarItem: NSStatusItem!
     var portManager: PortManagerMenuBar!
@@ -438,6 +439,7 @@ func cleanup() {
 }
 
 // Main function
+@MainActor
 func main() {
     // Check for single instance
     guard checkSingleInstance() else {
