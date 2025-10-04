@@ -41,7 +41,7 @@ jobs:
           VERSION="dev-$(date +%Y%m%d-%H%M%S)"
         fi
         
-        # Create Info.plist with version
+        # Create Info.plist with App Store requirements
         cat > PortManager.app/Contents/Info.plist << EOF
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -53,6 +53,8 @@ jobs:
             <string>com.portmanager.app</string>
             <key>CFBundleName</key>
             <string>Port Manager</string>
+            <key>CFBundleDisplayName</key>
+            <string>Port Manager</string>
             <key>CFBundleVersion</key>
             <string>$VERSION</string>
             <key>CFBundleShortVersionString</key>
@@ -63,8 +65,6 @@ jobs:
             <string>????</string>
             <key>LSMinimumSystemVersion</key>
             <string>14.0</string>
-            <key>LSUIElement</key>
-            <true/>
             <key>NSHighResolutionCapable</key>
             <true/>
             <key>NSPrincipalClass</key>
@@ -75,6 +75,14 @@ jobs:
             <true/>
             <key>LSApplicationCategoryType</key>
             <string>public.app-category.utilities</string>
+            <key>CFBundleDocumentTypes</key>
+            <array/>
+            <key>LSBackgroundOnly</key>
+            <false/>
+            <key>NSSupportsAutomaticTermination</key>
+            <true/>
+            <key>NSSupportsSuddenTermination</key>
+            <true/>
         </dict>
         </plist>
         EOF
@@ -105,23 +113,53 @@ jobs:
         # Make the app executable
         chmod +x PortManager.app/Contents/MacOS/PortManager
         
-        # Code sign the app (ad-hoc signing)
-        echo "Code signing the app..."
-        codesign --force --deep --sign - PortManager.app
+        # Set up code signing
+        echo "Setting up code signing..."
+        
+        # Create keychain for signing
+        security create-keychain -p "" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "" build.keychain
+        security set-keychain-settings -t 3600 -u build.keychain
+        
+        # Import certificates
+        echo "$CERTIFICATE_P12_BASE64" | base64 --decode > certificate.p12
+        security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+        security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+        
+        # Code sign the app with App Store certificate
+        echo "Code signing the app for App Store..."
+        codesign --force --deep --sign "3rd Party Mac Developer Application: ${{ secrets.APPLE_ID }}" --entitlements PortManager.entitlements PortManager.app
         
         # Verify the signature
         codesign --verify --verbose PortManager.app
         
-        # Create zip for distribution
-        echo "Creating distribution zip..."
-        zip -r PortManager-$VERSION.zip PortManager.app
+        # Create App Store package
+        echo "Creating App Store package..."
+        productbuild --component PortManager.app /Applications --sign "3rd Party Mac Developer Installer: ${{ secrets.APPLE_ID }}" PortManager.pkg
         
-        # Also create a generic zip for latest
+        # Upload to App Store Connect (optional - requires manual submission)
+        echo "App Store package created: PortManager.pkg"
+        echo "Upload to App Store Connect manually or use altool for automated submission"
+        
+        # Clean up
+        rm -f certificate.p12
+        security delete-keychain build.keychain
+        
+        # Create distribution files
+        echo "Creating distribution files..."
+        
+        # Create zip for direct distribution (fallback)
+        zip -r PortManager-$VERSION.zip PortManager.app
         zip -r PortManager.zip PortManager.app
         
-        # Create a DMG for better distribution (optional)
-        echo "Creating DMG..."
-        hdiutil create -volname "Port Manager" -srcfolder PortManager.app -ov -format UDZO PortManager-$VERSION.dmg 2>/dev/null || echo "DMG creation failed, continuing with zip"
+        # Create DMG for direct distribution
+        hdiutil create -volname "Port Manager" -srcfolder PortManager.app -ov -format UDZO PortManager-$VERSION.dmg 2>/dev/null || echo "DMG creation failed"
+        
+        # Remove quarantine attributes
+        xattr -d com.apple.quarantine PortManager-$VERSION.zip 2>/dev/null || true
+        xattr -d com.apple.quarantine PortManager.zip 2>/dev/null || true
+        xattr -d com.apple.quarantine PortManager-$VERSION.dmg 2>/dev/null || true
         
         echo "App bundle created successfully!"
         echo "Version: $VERSION"
@@ -150,6 +188,7 @@ jobs:
         files: |
           PortManager.zip
           PortManager-${{ steps.version.outputs.VERSION }}.dmg
+          PortManager.pkg
         body: |
           ## Port Manager ${{ steps.version.outputs.VERSION }}
           
@@ -164,10 +203,17 @@ jobs:
           - 🔒 Single instance enforcement
           
           ### Installation
+          
+          **For App Store (Recommended):**
+          1. Download `PortManager.pkg`
+          2. Double-click to install
+          3. Look for "P" icon in menu bar
+          
+          **For Direct Installation:**
           1. Download `PortManager.zip`
           2. Extract the `PortManager.app` file
           3. Drag to Applications folder
-          4. Double-click to run
+          4. Right-click → Open (to bypass security warnings)
           5. Look for "P" icon in menu bar
           
           ### Requirements

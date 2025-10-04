@@ -22,8 +22,14 @@ A lightweight Swift-based macOS menu bar application that allows you to view all
 
 ### Option 1: Download Pre-built App (Recommended)
 1. **Go to [Releases](https://github.com/vikramtiwari/free-ports/releases)**
-2. **Download** the latest `PortManager.zip`
-3. **Extract** and drag `PortManager.app` to Applications
+2. **Download** the latest `PortManager.pkg` (App Store ready)
+3. **Double-click** to install
+4. **Run** the app and look for "P" in menu bar
+
+**Alternative Direct Installation:**
+1. **Download** `PortManager.zip` instead
+2. **Extract** and drag `PortManager.app` to Applications
+3. **Right-click** on the app and select "Open" (to bypass security warnings)
 4. **Run** the app and look for "P" in menu bar
 
 ### Option 2: Run from Source (Development)
@@ -142,6 +148,12 @@ The app uses standard macOS APIs and follows security best practices.
 **Solution**: 
 1. Right-click → Open → Open
 2. Or run: `xattr -cr PortManager.app`
+
+#### "Apple could not verify this app is free of malware"
+**Solution**: 
+1. Right-click → Open → Open (in the new dialog)
+2. Or go to System Preferences → Security & Privacy → General → Click "Open Anyway"
+3. Or run: `xattr -d com.apple.quarantine PortManager.app`
 
 #### App doesn't appear in menu bar
 **Solution**: 
