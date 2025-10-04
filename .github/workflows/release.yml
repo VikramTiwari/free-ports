@@ -105,12 +105,23 @@ jobs:
         # Make the app executable
         chmod +x PortManager.app/Contents/MacOS/PortManager
         
+        # Code sign the app (ad-hoc signing)
+        echo "Code signing the app..."
+        codesign --force --deep --sign - PortManager.app
+        
+        # Verify the signature
+        codesign --verify --verbose PortManager.app
+        
         # Create zip for distribution
         echo "Creating distribution zip..."
         zip -r PortManager-$VERSION.zip PortManager.app
         
         # Also create a generic zip for latest
         zip -r PortManager.zip PortManager.app
+        
+        # Create a DMG for better distribution (optional)
+        echo "Creating DMG..."
+        hdiutil create -volname "Port Manager" -srcfolder PortManager.app -ov -format UDZO PortManager-$VERSION.dmg 2>/dev/null || echo "DMG creation failed, continuing with zip"
         
         echo "App bundle created successfully!"
         echo "Version: $VERSION"
@@ -138,6 +149,7 @@ jobs:
       with:
         files: |
           PortManager.zip
+          PortManager-${{ steps.version.outputs.VERSION }}.dmg
         body: |
           ## Port Manager ${{ steps.version.outputs.VERSION }}
           
