@@ -1,0 +1,24 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#3B82F6" stroke="#1E40AF" stroke-width="32"/>
+  
+  <!-- Network/Port icon -->
+  <g fill="white">
+    <!-- Main server/port symbol -->
+    <rect x="180" y="160" width="152" height="80" rx="8" fill="white"/>
+    <rect x="200" y="180" width="112" height="8" rx="4" fill="#3B82F6"/>
+    <rect x="200" y="200" width="80" height="8" rx="4" fill="#3B82F6"/>
+    <rect x="200" y="220" width="96" height="8" rx="4" fill="#3B82F6"/>
+    
+    <!-- Connection lines -->
+    <line x1="120" y1="200" x2="180" y2="200" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    <line x1="332" y1="200" x2="392" y2="200" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    
+    <!-- Port indicators -->
+    <circle cx="140" cy="200" r="12" fill="white"/>
+    <circle cx="372" cy="200" r="12" fill="white"/>
+    
+    <!-- "P" for Port Manager -->
+    <text x="256" y="340" font-family="Arial, sans-serif" font-size="120" font-weight="bold" text-anchor="middle" fill="white">P</text>
+  </g>
+</svg>
