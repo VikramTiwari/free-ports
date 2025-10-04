@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    permissions:
+      contents: write
     
     steps:
     - name: Checkout code
@@ -116,6 +118,13 @@ jobs:
         else
           echo "VERSION=dev-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
         fi
+        
+    - name: List files for debugging
+      run: |
+        echo "Current directory contents:"
+        ls -la
+        echo "Checking if PortManager.zip exists:"
+        ls -la PortManager.zip || echo "PortManager.zip not found"
         
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
