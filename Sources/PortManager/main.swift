@@ -439,7 +439,6 @@ func cleanup() {
 }
 
 // Main function
-@MainActor
 func main() {
     // Check for single instance
     guard checkSingleInstance() else {
@@ -452,10 +451,15 @@ func main() {
         cleanup()
     }
     
-    let app = NSApplication.shared
-    let delegate = AppDelegateMenuBar()
-    app.delegate = delegate
-    app.run()
+    Task { @MainActor in
+        let app = NSApplication.shared
+        let delegate = AppDelegateMenuBar()
+        app.delegate = delegate
+        app.run()
+    }
+    
+    // Keep the main thread alive
+    RunLoop.main.run()
 }
 
 main()
