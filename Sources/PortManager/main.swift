@@ -197,18 +197,12 @@ class AppDelegateMenuBar: NSObject, NSApplicationDelegate {
         // Show loading state
         updateMenuWithLoading()
         
-        // Run port scanning in background
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            
-            let newPorts = self.portManager.getOpenPorts()
-            
-            // Update UI on main thread
-            DispatchQueue.main.async {
-                self.ports = newPorts
-                self.updateMenu()
-            }
-        }
+        // For now, let's keep it synchronous since that works
+        let newPorts = portManager.getOpenPorts()
+        
+        // Update UI directly
+        ports = newPorts
+        updateMenu()
     }
     
     func updateMenuWithLoading() {
@@ -240,10 +234,12 @@ class AppDelegateMenuBar: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem.separator())
         
         if ports.isEmpty {
+            print("DEBUG: No ports found, showing 'No open ports found' message")
             let noPortsItem = NSMenuItem(title: "No open ports found", action: nil, keyEquivalent: "")
             noPortsItem.isEnabled = false
             menu.addItem(noPortsItem)
         } else {
+            print("DEBUG: Found \(ports.count) ports, creating menu items")
             // Group ports by process name
             let groupedPorts = Dictionary(grouping: ports) { $0.processName }
             
@@ -265,7 +261,7 @@ class AppDelegateMenuBar: NSObject, NSApplicationDelegate {
                 return minPort1 < minPort2
             }
             
-            for processName in sortedProcessNames.prefix(10) { // Limit to 10 services to save memory
+            for processName in sortedProcessNames { // Show all services
                 guard let processPorts = groupedPorts[processName] else { continue }
                 
                 // All services get submenus - consistent alignment
@@ -286,12 +282,6 @@ class AppDelegateMenuBar: NSObject, NSApplicationDelegate {
                 let serviceItem = NSMenuItem(title: "\(processPorts.count) - \(processName)", action: nil, keyEquivalent: "")
                 serviceItem.submenu = serviceMenu
                 menu.addItem(serviceItem)
-            }
-            
-            if groupedPorts.count > 10 {
-                let moreItem = NSMenuItem(title: "... and \(groupedPorts.count - 10) more services", action: nil, keyEquivalent: "")
-                moreItem.isEnabled = false
-                menu.addItem(moreItem)
             }
         }
         
