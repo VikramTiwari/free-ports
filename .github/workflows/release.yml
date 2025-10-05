@@ -143,7 +143,7 @@ jobs:
         # Create a provisioning profile for Mac App Store
         echo "Creating provisioning profile for Mac App Store..."
         # This is a minimal provisioning profile that should work for App Store distribution
-        cat > embedded.provisionprofile << 'EOF'
+        cat > embedded.provisionprofile << 'PROVISION_EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -191,7 +191,7 @@ jobs:
     <integer>1</integer>
 </dict>
 </plist>
-EOF
+PROVISION_EOF
         
         # Import certificates
         echo "Importing certificates..."
