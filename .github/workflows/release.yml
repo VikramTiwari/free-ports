@@ -235,6 +235,7 @@ jobs:
           --bundle-version "$VERSION" \
           --bundle-short-version-string "$VERSION" \
           --apple-id "${{ secrets.APPLE_ID }}" \
+          --asc-public-id "${{ secrets.APP_IDENTIFIER }}" \
           --apiKey "${{ secrets.APPSTORE_API_KEY_ID }}" \
           --apiIssuer "${{ secrets.APPSTORE_API_ISSUER_ID }}" \
           --verbose
