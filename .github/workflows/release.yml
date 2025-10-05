@@ -264,14 +264,9 @@ jobs:
             fi
             
             # Sign the app with the App Store certificate
-            # For Mac App Store, we need to include the application identifier and provisioning profile
-            if [ -f "embedded.provisionprofile" ]; then
-                echo "Signing with provisioning profile..."
-                codesign --force --deep --sign "$CERT_NAME" --entitlements PortManager.entitlements --identifier "com.portmanager.app" --provisioning-profile embedded.provisionprofile PortManager.app
-            else
-                echo "Signing without provisioning profile..."
-                codesign --force --deep --sign "$CERT_NAME" --entitlements PortManager.entitlements --identifier "com.portmanager.app" PortManager.app
-            fi
+            # For Mac App Store, we need to include the application identifier
+            echo "Signing app with certificate: $CERT_NAME"
+            codesign --force --deep --sign "$CERT_NAME" --entitlements PortManager.entitlements --identifier "com.portmanager.app" PortManager.app
         else
             echo "No suitable certificate found, using ad-hoc signing"
             echo "Available certificates:"
