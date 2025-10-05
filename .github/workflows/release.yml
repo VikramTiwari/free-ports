@@ -172,11 +172,12 @@ jobs:
         
         # Code sign the app with App Store certificate
         echo "Code signing the app for App Store..."
-        # Try different certificate name formats
-        if security find-identity -v -p codesigning build.keychain | grep -q "Mac App Distribution"; then
-            codesign --force --deep --sign "Mac App Distribution" --entitlements PortManager.entitlements PortManager.app
-        elif security find-identity -v -p codesigning build.keychain | grep -q "3rd Party Mac Developer Application"; then
-            codesign --force --deep --sign "3rd Party Mac Developer Application" --entitlements PortManager.entitlements PortManager.app
+        # Get the exact certificate name from the keychain
+        CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac App Distribution|3rd Party Mac Developer Application)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        
+        if [ -n "$CERT_NAME" ]; then
+            echo "Found certificate: $CERT_NAME"
+            codesign --force --deep --sign "$CERT_NAME" --entitlements PortManager.entitlements PortManager.app
         else
             echo "No suitable certificate found, using ad-hoc signing"
             codesign --force --deep --sign - --entitlements PortManager.entitlements PortManager.app
@@ -187,15 +188,21 @@ jobs:
         
         # Create App Store package
         echo "Creating App Store package..."
-        # Try different installer certificate name formats
-        if security find-identity -v -p codesigning build.keychain | grep -q "Mac Installer Distribution"; then
-            productbuild --component PortManager.app /Applications --sign "Mac Installer Distribution" PortManager.pkg
-        elif security find-identity -v -p codesigning build.keychain | grep -q "3rd Party Mac Developer Installer"; then
-            productbuild --component PortManager.app /Applications --sign "3rd Party Mac Developer Installer" PortManager.pkg
+        # Get the exact installer certificate name from the keychain
+        INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|3rd Party Mac Developer Installer)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        
+        if [ -n "$INSTALLER_CERT_NAME" ]; then
+            echo "Found installer certificate: $INSTALLER_CERT_NAME"
+            productbuild --component PortManager.app /Applications --sign "$INSTALLER_CERT_NAME" PortManager.pkg
         else
             echo "No installer certificate found, creating unsigned package"
             productbuild --component PortManager.app /Applications PortManager.pkg
         fi
+        
+        # Set up App Store Connect API
+        echo "Setting up App Store Connect API..."
+        mkdir -p ~/.appstoreconnect/private_keys
+        echo "${{ secrets.APPSTORE_API_KEY_BASE64 }}" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_API_KEY_ID }}.p8
         
         # Upload to App Store Connect using modern API key approach
         echo "Uploading to App Store Connect..."
