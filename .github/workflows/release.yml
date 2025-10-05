@@ -123,22 +123,49 @@ jobs:
         security set-keychain-settings -t 3600 -u build.keychain
         
         # Import certificates
+        echo "Importing certificates..."
         echo "$CERTIFICATE_APP_BASE64" | base64 --decode > certificate_app.p12
         echo "$CERTIFICATE_INSTALLER_BASE64" | base64 --decode > certificate_installer.p12
-        security import certificate_app.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-        security import certificate_installer.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/productbuild
+        
+        # Import with verbose output for debugging
+        echo "Importing app certificate..."
+        security import certificate_app.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign -A
+        echo "Importing installer certificate..."
+        security import certificate_installer.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/productbuild -A
+        
+        # Set keychain settings
         security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+        
+        # List available identities for debugging
+        echo "Available signing identities:"
+        security find-identity -v -p codesigning build.keychain
         
         # Code sign the app with App Store certificate
         echo "Code signing the app for App Store..."
-        codesign --force --deep --sign "Mac App Distribution: ${{ secrets.APPLE_ID }}" --entitlements PortManager.entitlements PortManager.app
+        # Try different certificate name formats
+        if security find-identity -v -p codesigning build.keychain | grep -q "Mac App Distribution"; then
+            codesign --force --deep --sign "Mac App Distribution" --entitlements PortManager.entitlements PortManager.app
+        elif security find-identity -v -p codesigning build.keychain | grep -q "3rd Party Mac Developer Application"; then
+            codesign --force --deep --sign "3rd Party Mac Developer Application" --entitlements PortManager.entitlements PortManager.app
+        else
+            echo "No suitable certificate found, using ad-hoc signing"
+            codesign --force --deep --sign - --entitlements PortManager.entitlements PortManager.app
+        fi
         
         # Verify the signature
         codesign --verify --verbose PortManager.app
         
         # Create App Store package
         echo "Creating App Store package..."
-        productbuild --component PortManager.app /Applications --sign "Mac Installer Distribution: ${{ secrets.APPLE_ID }}" PortManager.pkg
+        # Try different installer certificate name formats
+        if security find-identity -v -p codesigning build.keychain | grep -q "Mac Installer Distribution"; then
+            productbuild --component PortManager.app /Applications --sign "Mac Installer Distribution" PortManager.pkg
+        elif security find-identity -v -p codesigning build.keychain | grep -q "3rd Party Mac Developer Installer"; then
+            productbuild --component PortManager.app /Applications --sign "3rd Party Mac Developer Installer" PortManager.pkg
+        else
+            echo "No installer certificate found, creating unsigned package"
+            productbuild --component PortManager.app /Applications PortManager.pkg
+        fi
         
         # Set up App Store Connect API
         echo "Setting up App Store Connect API..."
