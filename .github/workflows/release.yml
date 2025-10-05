@@ -197,17 +197,15 @@ jobs:
             productbuild --component PortManager.app /Applications PortManager.pkg
         fi
         
-        # Set up App Store Connect API
-        echo "Setting up App Store Connect API..."
-        echo "${{ secrets.APPSTORE_API_KEY_BASE64 }}" | base64 --decode > AuthKey_${{ secrets.APPSTORE_API_KEY_ID }}.p8
-        
-        # Upload to App Store Connect
+        # Upload to App Store Connect using modern API key approach
         echo "Uploading to App Store Connect..."
         xcrun altool --upload-package PortManager.pkg \
-          --username "${{ secrets.APPLE_ID }}" \
-          --password "${{ secrets.APPLE_ID_PASSWORD }}" \
           --type macos \
           --bundle-id "${{ secrets.APP_IDENTIFIER }}" \
+          --bundle-version "$VERSION" \
+          --bundle-short-version-string "$VERSION" \
+          --apiKey "${{ secrets.APPSTORE_API_KEY_ID }}" \
+          --apiIssuer "${{ secrets.APPSTORE_API_ISSUER_ID }}" \
           --verbose
         
         # Clean up
