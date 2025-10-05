@@ -58,13 +58,14 @@ class PortManagerMenuBar {
             guard !line.isEmpty && !line.hasPrefix("COMMAND") else { continue }
             
             let components = line.split(separator: " ", omittingEmptySubsequences: true)
-            guard components.count >= 9,
+            guard components.count >= 10,
                   let processID = Int(components[1]) else { continue }
             
             let processName = String(components[0])
-            let name = String(components[8])
+            let name = String(components[8]) // NAME column: *:5000
+            let state = String(components[9]) // STATE column: (LISTEN)
             
-            if let portInfo = parsePortFromName(name, processName: processName, processID: processID) {
+            if let portInfo = parsePortFromName(name, state: state, processName: processName, processID: processID) {
                 portInfos.append(portInfo)
             }
         }
@@ -78,16 +79,15 @@ class PortManagerMenuBar {
         return Array(uniquePorts)
     }
     
-    private func parsePortFromName(_ name: String, processName: String, processID: Int) -> PortInfoMenuBar? {
-        // Parse name like "*:7000 (LISTEN)" or "192.168.1.102:50005->162.159.136.234:443 (ESTABLISHED)"
-        let listenPattern = #"^(\*|[\d\.]+):(\d+)\s*\(([^)]+)\)$"#
-        let establishedPattern = #"^([\d\.]+):(\d+)->([\d\.]+):(\d+)\s*\(([^)]+)\)$"#
+    private func parsePortFromName(_ name: String, state: String, processName: String, processID: Int) -> PortInfoMenuBar? {
+        // Parse name like "*:5000" with separate state like "(LISTEN)"
+        let listenPattern = #"^(\*|[\d\.]+):(\d+)$"#
+        let establishedPattern = #"^([\d\.]+):(\d+)->([\d\.]+):(\d+)$"#
         
-        // Try LISTEN pattern first
+        // Try LISTEN pattern first (simple port binding)
         if let match = try? NSRegularExpression(pattern: listenPattern).firstMatch(in: name, range: NSRange(name.startIndex..., in: name)) {
             let localAddress = String(name[Range(match.range(at: 1), in: name)!])
             let portString = String(name[Range(match.range(at: 2), in: name)!])
-            let state = String(name[Range(match.range(at: 3), in: name)!])
             
             if let port = Int(portString) {
                 return PortInfoMenuBar(
@@ -102,13 +102,12 @@ class PortManagerMenuBar {
             }
         }
         
-        // Try ESTABLISHED pattern
+        // Try ESTABLISHED pattern (connection)
         if let match = try? NSRegularExpression(pattern: establishedPattern).firstMatch(in: name, range: NSRange(name.startIndex..., in: name)) {
             let localAddress = String(name[Range(match.range(at: 1), in: name)!])
             let portString = String(name[Range(match.range(at: 2), in: name)!])
             let foreignAddress = String(name[Range(match.range(at: 3), in: name)!])
             let foreignPort = String(name[Range(match.range(at: 4), in: name)!])
-            let state = String(name[Range(match.range(at: 5), in: name)!])
             
             if let port = Int(portString) {
                 return PortInfoMenuBar(
@@ -119,25 +118,6 @@ class PortManagerMenuBar {
                     state: state,
                     localAddress: localAddress,
                     foreignAddress: "\(foreignAddress):\(foreignPort)"
-                )
-            }
-        }
-        
-        // Try simple pattern without state (like "*:5173" or "127.0.0.1:32400")
-        let simplePattern = #"^(\*|[\d\.]+):(\d+)$"#
-        if let match = try? NSRegularExpression(pattern: simplePattern).firstMatch(in: name, range: NSRange(name.startIndex..., in: name)) {
-            let localAddress = String(name[Range(match.range(at: 1), in: name)!])
-            let portString = String(name[Range(match.range(at: 2), in: name)!])
-            
-            if let port = Int(portString) {
-                return PortInfoMenuBar(
-                    port: port,
-                    processName: processName,
-                    processID: processID,
-                    protocol: "TCP",
-                    state: "LISTEN",
-                    localAddress: localAddress,
-                    foreignAddress: "*"
                 )
             }
         }
