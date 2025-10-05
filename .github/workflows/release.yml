@@ -140,56 +140,24 @@ jobs:
         security unlock-keychain -p "" build.keychain
         security set-keychain-settings -t 3600 -u build.keychain
 
-        # Create a provisioning profile for Mac App Store
-        echo "Creating provisioning profile for Mac App Store..."
-        # This is a minimal provisioning profile that should work for App Store distribution
-        echo '<?xml version="1.0" encoding="UTF-8"?>' > embedded.provisionprofile
-        echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> embedded.provisionprofile
-        echo '<plist version="1.0">' >> embedded.provisionprofile
-        echo '<dict>' >> embedded.provisionprofile
-        echo '    <key>AppIDName</key>' >> embedded.provisionprofile
-        echo '    <string>Port Manager</string>' >> embedded.provisionprofile
-        echo '    <key>ApplicationIdentifierPrefix</key>' >> embedded.provisionprofile
-        echo '    <array>' >> embedded.provisionprofile
-        echo '        <string>28S54GN4Q4</string>' >> embedded.provisionprofile
-        echo '    </array>' >> embedded.provisionprofile
-        echo '    <key>CreationDate</key>' >> embedded.provisionprofile
-        echo '    <date>2025-10-05T01:57:00Z</date>' >> embedded.provisionprofile
-        echo '    <key>DeveloperCertificates</key>' >> embedded.provisionprofile
-        echo '    <array>' >> embedded.provisionprofile
-        echo '        <data>MIIBkTCB+wIJAKvz8j2y3xQZMA0GCSqGSIb3DQEBCwUAMBQxEjAQBgNVBAMMCUFwcGxlIEluYzAeFw0yNTEwMDUwMDAwMDBaFw0yNjEwMDUwMDAwMDBaMBQxEjAQBgNVBAMMCUFwcGxlIEluYzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGvz8j2y3xQZ</data>' >> embedded.provisionprofile
-        echo '    </array>' >> embedded.provisionprofile
-        echo '    <key>Entitlements</key>' >> embedded.provisionprofile
-        echo '    <dict>' >> embedded.provisionprofile
-        echo '        <key>com.apple.security.app-sandbox</key>' >> embedded.provisionprofile
-        echo '        <true/>' >> embedded.provisionprofile
-        echo '        <key>com.apple.security.network.client</key>' >> embedded.provisionprofile
-        echo '        <true/>' >> embedded.provisionprofile
-        echo '        <key>com.apple.security.network.server</key>' >> embedded.provisionprofile
-        echo '        <true/>' >> embedded.provisionprofile
-        echo '    </dict>' >> embedded.provisionprofile
-        echo '    <key>ExpirationDate</key>' >> embedded.provisionprofile
-        echo '    <date>2026-10-05T01:57:00Z</date>' >> embedded.provisionprofile
-        echo '    <key>Name</key>' >> embedded.provisionprofile
-        echo '    <string>Port Manager Mac App Store</string>' >> embedded.provisionprofile
-        echo '    <key>Platform</key>' >> embedded.provisionprofile
-        echo '    <array>' >> embedded.provisionprofile
-        echo '        <string>MacOSX</string>' >> embedded.provisionprofile
-        echo '    </array>' >> embedded.provisionprofile
-        echo '    <key>ProvisionedDevices</key>' >> embedded.provisionprofile
-        echo '    <array/>' >> embedded.provisionprofile
-        echo '    <key>TeamIdentifier</key>' >> embedded.provisionprofile
-        echo '    <array>' >> embedded.provisionprofile
-        echo '        <string>28S54GN4Q4</string>' >> embedded.provisionprofile
-        echo '    </array>' >> embedded.provisionprofile
-        echo '    <key>TeamName</key>' >> embedded.provisionprofile
-        echo '    <string>CakeAI, Inc</string>' >> embedded.provisionprofile
-        echo '    <key>UUID</key>' >> embedded.provisionprofile
-        echo '    <string>12345678-1234-1234-1234-123456789012</string>' >> embedded.provisionprofile
-        echo '    <key>Version</key>' >> embedded.provisionprofile
-        echo '    <integer>1</integer>' >> embedded.provisionprofile
-        echo '</dict>' >> embedded.provisionprofile
-        echo '</plist>' >> embedded.provisionprofile
+        # Create provisioning profile for Mac App Store
+        echo "Setting up provisioning profile for Mac App Store..."
+        
+        # Check if provisioning profile secret exists
+        if [ -n "${{ secrets.PROVISIONING_PROFILE_BASE64 }}" ]; then
+            echo "Using provided provisioning profile..."
+            echo "${{ secrets.PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > embedded.provisionprofile
+        else
+            echo "No provisioning profile provided. Using automatic code signing."
+            echo "To use a proper provisioning profile:"
+            echo "1. Go to https://developer.apple.com/account/resources/profiles/list"
+            echo "2. Create a 'Mac App Store Connect' provisioning profile"
+            echo "3. Select App ID: com.portmanager.app"
+            echo "4. Select your Mac App Distribution certificate"
+            echo "5. Download the .mobileprovision file"
+            echo "6. Convert to base64: base64 -i profile.mobileprovision -o profile.txt"
+            echo "7. Add as GitHub secret: PROVISIONING_PROFILE_BASE64"
+        fi
         
         # Import certificates
         echo "Importing certificates..."
@@ -278,9 +246,14 @@ jobs:
         
         if [ -n "$CERT_NAME" ]; then
             echo "Found certificate: $CERT_NAME"
-            # For Mac App Store distribution, we need to embed the provisioning profile
-            echo "Embedding provisioning profile..."
-            cp embedded.provisionprofile PortManager.app/Contents/embedded.provisionprofile
+            
+            # Embed provisioning profile if it exists
+            if [ -f "embedded.provisionprofile" ]; then
+                echo "Embedding provisioning profile..."
+                cp embedded.provisionprofile PortManager.app/Contents/embedded.provisionprofile
+            else
+                echo "No provisioning profile to embed"
+            fi
             
             # Sign the app with the App Store certificate
             codesign --force --deep --sign "$CERT_NAME" --entitlements PortManager.entitlements PortManager.app
