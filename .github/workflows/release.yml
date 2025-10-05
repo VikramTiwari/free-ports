@@ -113,6 +113,20 @@ jobs:
         
         # Convert to icns
         iconutil -c icns icon.iconset -o PortManager.app/Contents/Resources/AppIcon.icns > /dev/null 2>&1
+        
+        # Debug: Check if icon was created properly
+        echo "Checking icon creation..."
+        ls -la PortManager.app/Contents/Resources/AppIcon.icns
+        if [ -f "PortManager.app/Contents/Resources/AppIcon.icns" ]; then
+            echo "Icon file created successfully"
+            # Check icon contents
+            iconutil -c iconset PortManager.app/Contents/Resources/AppIcon.icns -o temp_iconset
+            ls -la temp_iconset/
+            rm -rf temp_iconset
+        else
+            echo "ERROR: Icon file was not created!"
+        fi
+        
         rm -rf icon.iconset
         
         # Make the app executable
@@ -206,16 +220,18 @@ jobs:
         echo "Looking for installer-specific certificates..."
         security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|3rd Party Mac Developer Installer)" || echo "No installer certificates found with expected names"
         
-        # Look specifically for installer certificates (include Mac Installer Submission)
-        INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|3rd Party Mac Developer Installer|Mac Installer Submission)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        # Look specifically for installer certificates (only App Store compatible ones)
+        INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|3rd Party Mac Developer Installer)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
         
         if [ -n "$INSTALLER_CERT_NAME" ]; then
             echo "Found installer certificate: $INSTALLER_CERT_NAME"
             productbuild --component PortManager.app /Applications --sign "$INSTALLER_CERT_NAME" PortManager.pkg
         else
             echo "No installer certificate found, creating unsigned package"
-            echo "Note: You need a 'Mac Installer Distribution' certificate for signed packages"
-            echo "Current certificate 'Apple Distribution' is for app signing only, not installer signing"
+            echo "Note: You need a 'Mac Installer Distribution' or '3rd Party Mac Developer Installer' certificate for signed packages"
+            echo "Available certificates:"
+            security find-identity -v -p codesigning build.keychain | grep -i installer || echo "No installer certificates found"
+            echo "Creating unsigned package (this may cause validation errors)"
             productbuild --component PortManager.app /Applications PortManager.pkg
         fi
         
