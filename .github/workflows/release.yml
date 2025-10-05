@@ -209,6 +209,10 @@ jobs:
         echo "Looking for '3rd Party Mac Developer Installer':"
         security find-identity -v -p codesigning build.keychain | grep "3rd Party Mac Developer Installer" || echo "Not found"
         
+        # Debug: Show the exact output we're searching in
+        echo "Raw certificate list for pattern matching:"
+        security find-identity -v -p codesigning build.keychain | cat -A
+        
         # Code sign the app with App Store certificate
         echo "Code signing the app for App Store..."
         # Get the exact certificate name from the keychain
@@ -241,13 +245,28 @@ jobs:
         security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|Mac Installer Submission|3rd Party Mac Developer Installer)" || echo "No installer certificates found with expected names"
         
         # Look specifically for installer certificates (only App Store compatible ones)
-        INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|Mac Installer Submission|3rd Party Mac Developer Installer)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        # First try to find any certificate with "Installer" in the name
+        INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -i installer | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        
+        # If not found, try the specific patterns
+        if [ -z "$INSTALLER_CERT_NAME" ]; then
+            INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|Mac Installer Submission|3rd Party Mac Developer Installer)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        fi
         
         if [ -n "$INSTALLER_CERT_NAME" ]; then
             echo "Found installer certificate: $INSTALLER_CERT_NAME"
             echo "Using certificate for package signing: $INSTALLER_CERT_NAME"
+            echo "Running productbuild command..."
             productbuild --component PortManager.app /Applications --sign "$INSTALLER_CERT_NAME" PortManager.pkg
             echo "Package created with certificate: $INSTALLER_CERT_NAME"
+            
+            # Verify the package signature
+            echo "Verifying package signature..."
+            pkgutil --check-signature PortManager.pkg || echo "Package signature verification failed"
+            
+            # Show package info
+            echo "Package info:"
+            pkgutil --pkg-info-plist PortManager.pkg || echo "Could not get package info"
         else
             echo "No installer certificate found, creating unsigned package"
             echo "Note: You need a 'Mac Installer Distribution' or '3rd Party Mac Developer Installer' certificate for signed packages"
@@ -256,6 +275,10 @@ jobs:
             echo "Creating unsigned package (this may cause validation errors)"
             productbuild --component PortManager.app /Applications PortManager.pkg
             echo "Package created WITHOUT certificate (unsigned)"
+            
+            # Verify the package signature
+            echo "Verifying unsigned package..."
+            pkgutil --check-signature PortManager.pkg || echo "Package signature verification failed"
         fi
         
         # Set up App Store Connect API
