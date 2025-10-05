@@ -256,12 +256,13 @@ jobs:
             fi
             
             # Sign the app with the App Store certificate
-            codesign --force --deep --sign "$CERT_NAME" --entitlements PortManager.entitlements PortManager.app
+            # For Mac App Store, we need to include the application identifier
+            codesign --force --deep --sign "$CERT_NAME" --entitlements PortManager.entitlements --identifier "com.portmanager.app" PortManager.app
         else
             echo "No suitable certificate found, using ad-hoc signing"
             echo "Available certificates:"
             security find-identity -v -p codesigning build.keychain
-            codesign --force --deep --sign - --entitlements PortManager.entitlements PortManager.app
+            codesign --force --deep --sign - --entitlements PortManager.entitlements --identifier "com.portmanager.app" PortManager.app
         fi
         
         # Verify the signature
