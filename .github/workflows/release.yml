@@ -204,6 +204,8 @@ jobs:
         echo "Testing our certificate search pattern:"
         echo "Looking for 'Mac Installer Distribution':"
         security find-identity -v -p codesigning build.keychain | grep "Mac Installer Distribution" || echo "Not found"
+        echo "Looking for 'Mac Installer Submission':"
+        security find-identity -v -p codesigning build.keychain | grep "Mac Installer Submission" || echo "Not found"
         echo "Looking for '3rd Party Mac Developer Installer':"
         security find-identity -v -p codesigning build.keychain | grep "3rd Party Mac Developer Installer" || echo "Not found"
         
@@ -236,10 +238,10 @@ jobs:
         security find-identity -v -p codesigning build.keychain
         echo ""
         echo "Looking for installer-specific certificates..."
-        security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|3rd Party Mac Developer Installer)" || echo "No installer certificates found with expected names"
+        security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|Mac Installer Submission|3rd Party Mac Developer Installer)" || echo "No installer certificates found with expected names"
         
         # Look specifically for installer certificates (only App Store compatible ones)
-        INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|3rd Party Mac Developer Installer)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|Mac Installer Submission|3rd Party Mac Developer Installer)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
         
         if [ -n "$INSTALLER_CERT_NAME" ]; then
             echo "Found installer certificate: $INSTALLER_CERT_NAME"
