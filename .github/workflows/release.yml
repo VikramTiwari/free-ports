@@ -196,6 +196,17 @@ jobs:
         echo "All certificates with 'distribution' in the name:"
         security find-identity -v -p codesigning build.keychain | grep -i distribution || echo "No distribution certificates found"
         
+        # Debug: Show ALL certificates (no filter)
+        echo "ALL certificates in keychain:"
+        security find-identity -v -p codesigning build.keychain
+        
+        # Debug: Check if our specific search pattern works
+        echo "Testing our certificate search pattern:"
+        echo "Looking for 'Mac Installer Distribution':"
+        security find-identity -v -p codesigning build.keychain | grep "Mac Installer Distribution" || echo "Not found"
+        echo "Looking for '3rd Party Mac Developer Installer':"
+        security find-identity -v -p codesigning build.keychain | grep "3rd Party Mac Developer Installer" || echo "Not found"
+        
         # Code sign the app with App Store certificate
         echo "Code signing the app for App Store..."
         # Get the exact certificate name from the keychain
@@ -232,7 +243,9 @@ jobs:
         
         if [ -n "$INSTALLER_CERT_NAME" ]; then
             echo "Found installer certificate: $INSTALLER_CERT_NAME"
+            echo "Using certificate for package signing: $INSTALLER_CERT_NAME"
             productbuild --component PortManager.app /Applications --sign "$INSTALLER_CERT_NAME" PortManager.pkg
+            echo "Package created with certificate: $INSTALLER_CERT_NAME"
         else
             echo "No installer certificate found, creating unsigned package"
             echo "Note: You need a 'Mac Installer Distribution' or '3rd Party Mac Developer Installer' certificate for signed packages"
@@ -240,6 +253,7 @@ jobs:
             security find-identity -v -p codesigning build.keychain | grep -i installer || echo "No installer certificates found"
             echo "Creating unsigned package (this may cause validation errors)"
             productbuild --component PortManager.app /Applications PortManager.pkg
+            echo "Package created WITHOUT certificate (unsigned)"
         fi
         
         # Set up App Store Connect API
