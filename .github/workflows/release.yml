@@ -203,8 +203,8 @@ jobs:
         echo "Looking for installer-specific certificates..."
         security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|3rd Party Mac Developer Installer)" || echo "No installer certificates found with expected names"
         
-        # Look specifically for installer certificates (not app certificates)
-        INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|3rd Party Mac Developer Installer)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        # Look specifically for installer certificates (exclude Apple Distribution)
+        INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|3rd Party Mac Developer Installer)" | grep -v "Apple Distribution" | head -1 | sed 's/.*"\(.*\)".*/\1/')
         
         if [ -n "$INSTALLER_CERT_NAME" ]; then
             echo "Found installer certificate: $INSTALLER_CERT_NAME"
@@ -212,7 +212,7 @@ jobs:
         else
             echo "No installer certificate found, creating unsigned package"
             echo "Note: You need a 'Mac Installer Distribution' certificate for signed packages"
-            echo "Current certificate is for app signing only, not installer signing"
+            echo "Current certificate 'Apple Distribution' is for app signing only, not installer signing"
             productbuild --component PortManager.app /Applications PortManager.pkg
         fi
         
