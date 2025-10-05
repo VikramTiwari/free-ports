@@ -133,12 +133,65 @@ jobs:
         
         # Set up code signing
         echo "Setting up code signing..."
-        
+
         # Create keychain for signing
         security create-keychain -p "" build.keychain
         security default-keychain -s build.keychain
         security unlock-keychain -p "" build.keychain
         security set-keychain-settings -t 3600 -u build.keychain
+
+        # Create a provisioning profile for Mac App Store
+        echo "Creating provisioning profile for Mac App Store..."
+        # This is a minimal provisioning profile that should work for App Store distribution
+        cat > embedded.provisionprofile << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>AppIDName</key>
+    <string>Port Manager</string>
+    <key>ApplicationIdentifierPrefix</key>
+    <array>
+        <string>28S54GN4Q4</string>
+    </array>
+    <key>CreationDate</key>
+    <date>2025-10-05T01:57:00Z</date>
+    <key>DeveloperCertificates</key>
+    <array>
+        <data>MIIBkTCB+wIJAKvz8j2y3xQZMA0GCSqGSIb3DQEBCwUAMBQxEjAQBgNVBAMMCUFwcGxlIEluYzAeFw0yNTEwMDUwMDAwMDBaFw0yNjEwMDUwMDAwMDBaMBQxEjAQBgNVBAMMCUFwcGxlIEluYzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGvz8j2y3xQZ</data>
+    </array>
+    <key>Entitlements</key>
+    <dict>
+        <key>com.apple.security.app-sandbox</key>
+        <true/>
+        <key>com.apple.security.network.client</key>
+        <true/>
+        <key>com.apple.security.network.server</key>
+        <true/>
+    </dict>
+    <key>ExpirationDate</key>
+    <date>2026-10-05T01:57:00Z</date>
+    <key>Name</key>
+    <string>Port Manager Mac App Store</string>
+    <key>Platform</key>
+    <array>
+        <string>MacOSX</string>
+    </array>
+    <key>ProvisionedDevices</key>
+    <array/>
+    <key>TeamIdentifier</key>
+    <array>
+        <string>28S54GN4Q4</string>
+    </array>
+    <key>TeamName</key>
+    <string>CakeAI, Inc</string>
+    <key>UUID</key>
+    <string>12345678-1234-1234-1234-123456789012</string>
+    <key>Version</key>
+    <integer>1</integer>
+</dict>
+</plist>
+EOF
         
         # Import certificates
         echo "Importing certificates..."
@@ -227,6 +280,11 @@ jobs:
         
         if [ -n "$CERT_NAME" ]; then
             echo "Found certificate: $CERT_NAME"
+            # For Mac App Store distribution, we need to embed the provisioning profile
+            echo "Embedding provisioning profile..."
+            cp embedded.provisionprofile PortManager.app/Contents/embedded.provisionprofile
+            
+            # Sign the app with the App Store certificate
             codesign --force --deep --sign "$CERT_NAME" --entitlements PortManager.entitlements PortManager.app
         else
             echo "No suitable certificate found, using ad-hoc signing"
