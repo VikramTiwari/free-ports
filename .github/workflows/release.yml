@@ -173,6 +173,9 @@ jobs:
         # Code sign the app with App Store certificate
         echo "Code signing the app for App Store..."
         # Get the exact certificate name from the keychain
+        echo "Searching for certificates..."
+        security find-identity -v -p codesigning build.keychain | grep -E "(Mac App Distribution|3rd Party Mac Developer Application)" || echo "No certificates found with expected names"
+        
         CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac App Distribution|3rd Party Mac Developer Application)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
         
         if [ -n "$CERT_NAME" ]; then
@@ -180,6 +183,8 @@ jobs:
             codesign --force --deep --sign "$CERT_NAME" --entitlements PortManager.entitlements PortManager.app
         else
             echo "No suitable certificate found, using ad-hoc signing"
+            echo "Available certificates:"
+            security find-identity -v -p codesigning build.keychain
             codesign --force --deep --sign - --entitlements PortManager.entitlements PortManager.app
         fi
         
@@ -211,6 +216,7 @@ jobs:
           --bundle-id "${{ secrets.APP_IDENTIFIER }}" \
           --bundle-version "$VERSION" \
           --bundle-short-version-string "$VERSION" \
+          --apple-id "${{ secrets.APPLE_ID }}" \
           --apiKey "${{ secrets.APPSTORE_API_KEY_ID }}" \
           --apiIssuer "${{ secrets.APPSTORE_API_ISSUER_ID }}" \
           --verbose
