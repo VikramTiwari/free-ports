@@ -153,14 +153,14 @@ jobs:
         
         # Import with verbose output for debugging
         echo "Importing app certificate..."
-        security import certificate_app.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}" -A -v || {
+        security import certificate_app.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}" -A || {
             echo "Failed to import app certificate, trying without -A flag..."
-            security import certificate_app.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}" -v
+            security import certificate_app.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}"
         }
         echo "Importing installer certificate..."
-        security import certificate_installer.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}" -A -v || {
+        security import certificate_installer.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}" -A || {
             echo "Failed to import installer certificate, trying without -A flag..."
-            security import certificate_installer.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}" -v
+            security import certificate_installer.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}"
         }
         
         # Set keychain settings
