@@ -144,12 +144,20 @@ jobs:
         echo "Setting up provisioning profile for Mac App Store..."
         
         # Check if provisioning profile secret exists
+        echo "Debug: Checking provisioning profile secret..."
+        echo "Debug: PROVISIONING_PROFILE_BASE64 length: $(echo "${{ secrets.PROVISIONING_PROFILE_BASE64 }}" | wc -c)"
+        echo "Debug: PROVISIONING_PROFILE_BASE64 first 50 chars: $(echo "${{ secrets.PROVISIONING_PROFILE_BASE64 }}" | cut -c1-50)"
+        echo "Debug: PROVISIONING_PROFILE_BASE64 last 50 chars: $(echo "${{ secrets.PROVISIONING_PROFILE_BASE64 }}" | rev | cut -c1-50 | rev)"
+        
         if [ -n "${{ secrets.PROVISIONING_PROFILE_BASE64 }}" ]; then
             echo "Using provided provisioning profile..."
             echo "${{ secrets.PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > embedded.provisionprofile
+            echo "Debug: Provisioning profile file created, size: $(stat -f%z embedded.provisionprofile 2>/dev/null || echo 'unknown')"
+            echo "Debug: First few lines of provisioning profile:"
+            head -5 embedded.provisionprofile || echo "Could not read provisioning profile"
         else
             echo "No provisioning profile provided. Using automatic code signing."
-            echo "To use a proper provisioning profile:"
+            echo "Note: For production, create a proper Mac App Store provisioning profile:"
             echo "1. Go to https://developer.apple.com/account/resources/profiles/list"
             echo "2. Create a 'Mac App Store Connect' provisioning profile"
             echo "3. Select App ID: com.portmanager.app"
@@ -256,8 +264,14 @@ jobs:
             fi
             
             # Sign the app with the App Store certificate
-            # For Mac App Store, we need to include the application identifier
-            codesign --force --deep --sign "$CERT_NAME" --entitlements PortManager.entitlements --identifier "com.portmanager.app" PortManager.app
+            # For Mac App Store, we need to include the application identifier and provisioning profile
+            if [ -f "embedded.provisionprofile" ]; then
+                echo "Signing with provisioning profile..."
+                codesign --force --deep --sign "$CERT_NAME" --entitlements PortManager.entitlements --identifier "com.portmanager.app" --provisioning-profile embedded.provisionprofile PortManager.app
+            else
+                echo "Signing without provisioning profile..."
+                codesign --force --deep --sign "$CERT_NAME" --entitlements PortManager.entitlements --identifier "com.portmanager.app" PortManager.app
+            fi
         else
             echo "No suitable certificate found, using ad-hoc signing"
             echo "Available certificates:"
