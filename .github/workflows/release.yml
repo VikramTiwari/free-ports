@@ -116,13 +116,10 @@ jobs:
         
         # Debug: Check if icon was created properly
         echo "Checking icon creation..."
-        ls -la PortManager.app/Contents/Resources/AppIcon.icns
         if [ -f "PortManager.app/Contents/Resources/AppIcon.icns" ]; then
             echo "Icon file created successfully"
-            # Check icon contents
-            iconutil -c iconset PortManager.app/Contents/Resources/AppIcon.icns -o temp_iconset
-            ls -la temp_iconset/
-            rm -rf temp_iconset
+            ls -la PortManager.app/Contents/Resources/AppIcon.icns
+            echo "Icon file size: $(stat -f%z PortManager.app/Contents/Resources/AppIcon.icns) bytes"
         else
             echo "ERROR: Icon file was not created!"
         fi
