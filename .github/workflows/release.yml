@@ -126,12 +126,14 @@ jobs:
         echo "Importing certificates..."
         
         # Check base64 content length
-        echo "App certificate base64 length: ${#CERTIFICATE_APP_BASE64}"
-        echo "Installer certificate base64 length: ${#CERTIFICATE_INSTALLER_BASE64}"
+        APP_CERT_LENGTH=$(echo "${{ secrets.CERTIFICATE_APP_BASE64 }}" | wc -c)
+        INSTALLER_CERT_LENGTH=$(echo "${{ secrets.CERTIFICATE_INSTALLER_BASE64 }}" | wc -c)
+        echo "App certificate base64 length: $APP_CERT_LENGTH"
+        echo "Installer certificate base64 length: $INSTALLER_CERT_LENGTH"
         
         # Decode certificates
-        echo "$CERTIFICATE_APP_BASE64" | base64 --decode > certificate_app.p12
-        echo "$CERTIFICATE_INSTALLER_BASE64" | base64 --decode > certificate_installer.p12
+        echo "${{ secrets.CERTIFICATE_APP_BASE64 }}" | base64 --decode > certificate_app.p12
+        echo "${{ secrets.CERTIFICATE_INSTALLER_BASE64 }}" | base64 --decode > certificate_installer.p12
         
         # Debug certificate files
         echo "Checking certificate files..."
@@ -151,14 +153,14 @@ jobs:
         
         # Import with verbose output for debugging
         echo "Importing app certificate..."
-        security import certificate_app.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -A -v || {
+        security import certificate_app.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}" -A -v || {
             echo "Failed to import app certificate, trying without -A flag..."
-            security import certificate_app.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -v
+            security import certificate_app.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}" -v
         }
         echo "Importing installer certificate..."
-        security import certificate_installer.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -A -v || {
+        security import certificate_installer.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}" -A -v || {
             echo "Failed to import installer certificate, trying without -A flag..."
-            security import certificate_installer.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -v
+            security import certificate_installer.p12 -k build.keychain -P "${{ secrets.CERTIFICATE_PASSWORD }}" -v
         }
         
         # Set keychain settings
