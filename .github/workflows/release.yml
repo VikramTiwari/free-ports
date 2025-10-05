@@ -85,6 +85,8 @@ jobs:
             <true/>
             <key>NSSupportsSuddenTermination</key>
             <true/>
+            <key>CFBundleIconFile</key>
+            <string>AppIcon</string>
         </dict>
         </plist>
         EOF
@@ -181,10 +183,18 @@ jobs:
         
         # Set keychain settings
         security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-        
+
         # List available identities for debugging
         echo "Available signing identities:"
         security find-identity -v -p codesigning build.keychain
+        
+        # Debug: Show all certificates with installer in the name
+        echo "All certificates with 'installer' in the name:"
+        security find-identity -v -p codesigning build.keychain | grep -i installer || echo "No installer certificates found"
+        
+        # Debug: Show all certificates with 'distribution' in the name
+        echo "All certificates with 'distribution' in the name:"
+        security find-identity -v -p codesigning build.keychain | grep -i distribution || echo "No distribution certificates found"
         
         # Code sign the app with App Store certificate
         echo "Code signing the app for App Store..."
