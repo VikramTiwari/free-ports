@@ -143,55 +143,53 @@ jobs:
         # Create a provisioning profile for Mac App Store
         echo "Creating provisioning profile for Mac App Store..."
         # This is a minimal provisioning profile that should work for App Store distribution
-        cat > embedded.provisionprofile << 'PROVISION_EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>AppIDName</key>
-    <string>Port Manager</string>
-    <key>ApplicationIdentifierPrefix</key>
-    <array>
-        <string>28S54GN4Q4</string>
-    </array>
-    <key>CreationDate</key>
-    <date>2025-10-05T01:57:00Z</date>
-    <key>DeveloperCertificates</key>
-    <array>
-        <data>MIIBkTCB+wIJAKvz8j2y3xQZMA0GCSqGSIb3DQEBCwUAMBQxEjAQBgNVBAMMCUFwcGxlIEluYzAeFw0yNTEwMDUwMDAwMDBaFw0yNjEwMDUwMDAwMDBaMBQxEjAQBgNVBAMMCUFwcGxlIEluYzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGvz8j2y3xQZ</data>
-    </array>
-    <key>Entitlements</key>
-    <dict>
-        <key>com.apple.security.app-sandbox</key>
-        <true/>
-        <key>com.apple.security.network.client</key>
-        <true/>
-        <key>com.apple.security.network.server</key>
-        <true/>
-    </dict>
-    <key>ExpirationDate</key>
-    <date>2026-10-05T01:57:00Z</date>
-    <key>Name</key>
-    <string>Port Manager Mac App Store</string>
-    <key>Platform</key>
-    <array>
-        <string>MacOSX</string>
-    </array>
-    <key>ProvisionedDevices</key>
-    <array/>
-    <key>TeamIdentifier</key>
-    <array>
-        <string>28S54GN4Q4</string>
-    </array>
-    <key>TeamName</key>
-    <string>CakeAI, Inc</string>
-    <key>UUID</key>
-    <string>12345678-1234-1234-1234-123456789012</string>
-    <key>Version</key>
-    <integer>1</integer>
-</dict>
-</plist>
-PROVISION_EOF
+        echo '<?xml version="1.0" encoding="UTF-8"?>' > embedded.provisionprofile
+        echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> embedded.provisionprofile
+        echo '<plist version="1.0">' >> embedded.provisionprofile
+        echo '<dict>' >> embedded.provisionprofile
+        echo '    <key>AppIDName</key>' >> embedded.provisionprofile
+        echo '    <string>Port Manager</string>' >> embedded.provisionprofile
+        echo '    <key>ApplicationIdentifierPrefix</key>' >> embedded.provisionprofile
+        echo '    <array>' >> embedded.provisionprofile
+        echo '        <string>28S54GN4Q4</string>' >> embedded.provisionprofile
+        echo '    </array>' >> embedded.provisionprofile
+        echo '    <key>CreationDate</key>' >> embedded.provisionprofile
+        echo '    <date>2025-10-05T01:57:00Z</date>' >> embedded.provisionprofile
+        echo '    <key>DeveloperCertificates</key>' >> embedded.provisionprofile
+        echo '    <array>' >> embedded.provisionprofile
+        echo '        <data>MIIBkTCB+wIJAKvz8j2y3xQZMA0GCSqGSIb3DQEBCwUAMBQxEjAQBgNVBAMMCUFwcGxlIEluYzAeFw0yNTEwMDUwMDAwMDBaFw0yNjEwMDUwMDAwMDBaMBQxEjAQBgNVBAMMCUFwcGxlIEluYzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGvz8j2y3xQZ</data>' >> embedded.provisionprofile
+        echo '    </array>' >> embedded.provisionprofile
+        echo '    <key>Entitlements</key>' >> embedded.provisionprofile
+        echo '    <dict>' >> embedded.provisionprofile
+        echo '        <key>com.apple.security.app-sandbox</key>' >> embedded.provisionprofile
+        echo '        <true/>' >> embedded.provisionprofile
+        echo '        <key>com.apple.security.network.client</key>' >> embedded.provisionprofile
+        echo '        <true/>' >> embedded.provisionprofile
+        echo '        <key>com.apple.security.network.server</key>' >> embedded.provisionprofile
+        echo '        <true/>' >> embedded.provisionprofile
+        echo '    </dict>' >> embedded.provisionprofile
+        echo '    <key>ExpirationDate</key>' >> embedded.provisionprofile
+        echo '    <date>2026-10-05T01:57:00Z</date>' >> embedded.provisionprofile
+        echo '    <key>Name</key>' >> embedded.provisionprofile
+        echo '    <string>Port Manager Mac App Store</string>' >> embedded.provisionprofile
+        echo '    <key>Platform</key>' >> embedded.provisionprofile
+        echo '    <array>' >> embedded.provisionprofile
+        echo '        <string>MacOSX</string>' >> embedded.provisionprofile
+        echo '    </array>' >> embedded.provisionprofile
+        echo '    <key>ProvisionedDevices</key>' >> embedded.provisionprofile
+        echo '    <array/>' >> embedded.provisionprofile
+        echo '    <key>TeamIdentifier</key>' >> embedded.provisionprofile
+        echo '    <array>' >> embedded.provisionprofile
+        echo '        <string>28S54GN4Q4</string>' >> embedded.provisionprofile
+        echo '    </array>' >> embedded.provisionprofile
+        echo '    <key>TeamName</key>' >> embedded.provisionprofile
+        echo '    <string>CakeAI, Inc</string>' >> embedded.provisionprofile
+        echo '    <key>UUID</key>' >> embedded.provisionprofile
+        echo '    <string>12345678-1234-1234-1234-123456789012</string>' >> embedded.provisionprofile
+        echo '    <key>Version</key>' >> embedded.provisionprofile
+        echo '    <integer>1</integer>' >> embedded.provisionprofile
+        echo '</dict>' >> embedded.provisionprofile
+        echo '</plist>' >> embedded.provisionprofile
         
         # Import certificates
         echo "Importing certificates..."
