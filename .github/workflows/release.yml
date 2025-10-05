@@ -37,6 +37,8 @@ jobs:
         # Get version from tag or use default
         if [[ $GITHUB_REF == refs/tags/* ]]; then
           VERSION=${GITHUB_REF#refs/tags/}
+          # Remove 'v' prefix if present for App Store compatibility
+          VERSION=${VERSION#v}
         else
           VERSION="dev-$(date +%Y%m%d-%H%M%S)"
         fi
@@ -174,9 +176,9 @@ jobs:
         echo "Code signing the app for App Store..."
         # Get the exact certificate name from the keychain
         echo "Searching for certificates..."
-        security find-identity -v -p codesigning build.keychain | grep -E "(Mac App Distribution|3rd Party Mac Developer Application)" || echo "No certificates found with expected names"
+        security find-identity -v -p codesigning build.keychain | grep -E "(Apple Distribution|Mac App Distribution|3rd Party Mac Developer Application)" || echo "No certificates found with expected names"
         
-        CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac App Distribution|3rd Party Mac Developer Application)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Apple Distribution|Mac App Distribution|3rd Party Mac Developer Application)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
         
         if [ -n "$CERT_NAME" ]; then
             echo "Found certificate: $CERT_NAME"
@@ -194,7 +196,10 @@ jobs:
         # Create App Store package
         echo "Creating App Store package..."
         # Get the exact installer certificate name from the keychain
-        INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|3rd Party Mac Developer Installer)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        echo "Searching for installer certificates..."
+        security find-identity -v -p codesigning build.keychain | grep -E "(Apple Distribution|Mac Installer Distribution|3rd Party Mac Developer Installer)" || echo "No installer certificates found with expected names"
+        
+        INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Apple Distribution|Mac Installer Distribution|3rd Party Mac Developer Installer)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
         
         if [ -n "$INSTALLER_CERT_NAME" ]; then
             echo "Found installer certificate: $INSTALLER_CERT_NAME"
