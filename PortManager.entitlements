@@ -18,7 +18,5 @@
         <string>/bin/kill</string>
         <string>/usr/bin/killall</string>
     </array>
-    <key>application-identifier</key>
-    <string>28S54GN4Q4.com.portmanager.app</string>
 </dict>
 </plist>
