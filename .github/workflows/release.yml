@@ -218,6 +218,12 @@ jobs:
         
         # Set up App Store Connect API
         echo "Setting up App Store Connect API..."
+        
+        # Debug: Log the App ID (first few characters only for security)
+        echo "Debug: APP_IDENTIFIER secret length: $(echo "${{ secrets.APP_IDENTIFIER }}" | wc -c)"
+        echo "Debug: APP_IDENTIFIER first 5 chars: $(echo "${{ secrets.APP_IDENTIFIER }}" | cut -c1-5)"
+        echo "Debug: APP_IDENTIFIER last 5 chars: $(echo "${{ secrets.APP_IDENTIFIER }}" | rev | cut -c1-5 | rev)"
+        
         mkdir -p ~/.appstoreconnect/private_keys
         echo "${{ secrets.APPSTORE_API_KEY_BASE64 }}" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_API_KEY_ID }}.p8
         
