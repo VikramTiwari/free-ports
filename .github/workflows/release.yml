@@ -227,16 +227,12 @@ jobs:
         mkdir -p ~/.appstoreconnect/private_keys
         echo "${{ secrets.APPSTORE_API_KEY_BASE64 }}" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_API_KEY_ID }}.p8
         
-        # Upload to App Store Connect using modern API key approach
+        # Upload to App Store Connect using traditional username/password approach
         echo "Uploading to App Store Connect..."
-        xcrun altool --upload-package PortManager.pkg \
-          --type macos \
-          --bundle-id "com.portmanager.app" \
-          --bundle-version "$VERSION" \
-          --bundle-short-version-string "$VERSION" \
-          --apple-id "${{ secrets.APPLE_ID }}" \
-          --apiKey "${{ secrets.APPSTORE_API_KEY_ID }}" \
-          --apiIssuer "${{ secrets.APPSTORE_API_ISSUER_ID }}" \
+        xcrun altool --upload-app -f PortManager.pkg -t macos \
+          -u "${{ secrets.APPLE_ID }}" \
+          -p "${{ secrets.APPLE_ID_PASSWORD }}" \
+          --output-format xml \
           --verbose
         
         # Clean up
