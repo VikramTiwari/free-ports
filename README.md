@@ -32,6 +32,51 @@ A lightweight Swift-based macOS menu bar application that allows you to view all
 3. **Right-click** on the app and select "Open" (to bypass security warnings)
 4. **Run** the app and look for "P" in menu bar
 
+## 🏪 Mac App Store Distribution Setup
+
+### Required GitHub Secrets
+
+To enable automated App Store releases, add these secrets to your GitHub repository:
+
+**Go to**: Repository → Settings → Secrets and variables → Actions
+
+#### App Store Connect API
+```
+APPSTORE_API_KEY_ID: [10-character Key ID from App Store Connect]
+APPSTORE_API_ISSUER_ID: [UUID Issuer ID from App Store Connect]
+APPSTORE_API_KEY_BASE64: [Base64 encoded .p8 file]
+```
+
+**Find these at**: https://appstoreconnect.apple.com/ → Users and Access → Keys → App Store Connect API
+
+#### Certificates
+```
+CERTIFICATE_APP_BASE64: [Base64 encoded Mac App Distribution .p12]
+CERTIFICATE_INSTALLER_BASE64: [Base64 encoded Mac Installer Distribution .p12]
+CERTIFICATE_PASSWORD: [Password for .p12 files]
+```
+
+**Create certificates at**: https://developer.apple.com/account/resources/certificates/list
+- Select "Mac App Distribution" 
+- Select "Mac Installer Distribution"
+
+#### App Store Connect
+```
+APPLE_ID: [Your Apple ID email]
+APPLE_ID_PASSWORD: [App-specific password from appleid.apple.com]
+TEAM_ID: [10-character Team ID from developer.apple.com/account/#!/membership/]
+APP_IDENTIFIER: com.portmanager.app
+```
+
+### Certificate Export Process
+1. **Export from Keychain Access** as .p12 files
+2. **Convert to base64**:
+   ```bash
+   base64 -i MacAppDistribution.p12 -o cert_app.txt
+   base64 -i MacInstallerDistribution.p12 -o cert_installer.txt
+   ```
+3. **Copy contents** to GitHub secrets
+
 ### Option 2: Run from Source (Development)
 ```bash
 # Clone or download this repository
