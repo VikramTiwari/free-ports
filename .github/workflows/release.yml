@@ -231,7 +231,7 @@ jobs:
         echo "Uploading to App Store Connect..."
         xcrun altool --upload-package PortManager.pkg \
           --type macos \
-          --bundle-id "${{ secrets.APP_IDENTIFIER }}" \
+          --bundle-id "com.portmanager.app" \
           --bundle-version "$VERSION" \
           --bundle-short-version-string "$VERSION" \
           --apple-id "${{ secrets.APPLE_ID }}" \
