@@ -211,7 +211,11 @@ jobs:
         
         # Debug: Show the exact output we're searching in
         echo "Raw certificate list for pattern matching:"
-        security find-identity -v -p codesigning build.keychain | cat -A
+        security find-identity -v -p codesigning build.keychain | hexdump -C
+        
+        # Debug: Show ALL certificates (not just codesigning ones)
+        echo "ALL certificates in keychain (including non-codesigning):"
+        security find-identity -v build.keychain
         
         # Code sign the app with App Store certificate
         echo "Code signing the app for App Store..."
@@ -245,12 +249,17 @@ jobs:
         security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|Mac Installer Submission|3rd Party Mac Developer Installer)" || echo "No installer certificates found with expected names"
         
         # Look specifically for installer certificates (only App Store compatible ones)
-        # First try to find any certificate with "Installer" in the name
-        INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -i installer | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        # First try to find any certificate with "Installer" in the name (all certificates, not just codesigning)
+        INSTALLER_CERT_NAME=$(security find-identity -v build.keychain | grep -i installer | head -1 | sed 's/.*"\(.*\)".*/\1/')
         
-        # If not found, try the specific patterns
+        # If not found, try the specific patterns in all certificates
         if [ -z "$INSTALLER_CERT_NAME" ]; then
-            INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -E "(Mac Installer Distribution|Mac Installer Submission|3rd Party Mac Developer Installer)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+            INSTALLER_CERT_NAME=$(security find-identity -v build.keychain | grep -E "(Mac Installer Distribution|Mac Installer Submission|3rd Party Mac Developer Installer)" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        fi
+        
+        # If still not found, try codesigning certificates only
+        if [ -z "$INSTALLER_CERT_NAME" ]; then
+            INSTALLER_CERT_NAME=$(security find-identity -v -p codesigning build.keychain | grep -i installer | head -1 | sed 's/.*"\(.*\)".*/\1/')
         fi
         
         if [ -n "$INSTALLER_CERT_NAME" ]; then
