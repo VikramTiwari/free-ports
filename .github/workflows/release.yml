@@ -97,15 +97,22 @@ jobs:
         echo "Creating app icon..."
         mkdir -p icon.iconset
         
+        # Install librsvg for SVG conversion
+        echo "Installing librsvg for SVG conversion..."
+        brew install librsvg || echo "Failed to install librsvg, will use fallback"
+        
         # Convert SVG to PNG at 1024x1024 (required for App Store)
         if command -v rsvg-convert &> /dev/null; then
+            echo "Using rsvg-convert for SVG conversion..."
             rsvg-convert -w 1024 -h 1024 icon.svg -o icon.iconset/icon_512x512@2x.png
-            # Also create 512x512 version
             rsvg-convert -w 512 -h 512 icon.svg -o icon.iconset/icon_512x512.png
+            echo "SVG conversion successful"
         else
-            # Fallback: use sips with a simple blue circle
-            sips -s format png -z 1024 1024 --setProperty format png /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns --out icon.iconset/icon_512x512@2x.png > /dev/null 2>&1
-            sips -s format png -z 512 512 --setProperty format png /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns --out icon.iconset/icon_512x512.png > /dev/null 2>&1
+            echo "rsvg-convert not available, using fallback method..."
+            # Create a simple icon using sips and basic shapes
+            # First create a 1024x1024 PNG with a blue background
+            sips -s format png -z 1024 1024 --setProperty format png /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns --out icon.iconset/icon_512x512@2x.png
+            sips -z 512 512 --setProperty format png /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns --out icon.iconset/icon_512x512.png
         fi
         
         # Create different sizes
@@ -124,11 +131,33 @@ jobs:
             echo "Icon file created successfully"
             ls -la PortManager.app/Contents/Resources/AppIcon.icns
             echo "Icon file size: $(stat -f%z PortManager.app/Contents/Resources/AppIcon.icns) bytes"
+            
+            # Verify the icon is valid
+            file PortManager.app/Contents/Resources/AppIcon.icns
+            echo "Icon validation:"
+            iconutil -c iconset PortManager.app/Contents/Resources/AppIcon.icns -o temp_iconset 2>&1 || echo "Icon validation failed"
+            rm -rf temp_iconset 2>/dev/null || true
         else
             echo "ERROR: Icon file was not created!"
+            echo "Available files in Resources directory:"
+            ls -la PortManager.app/Contents/Resources/ || echo "Resources directory not found"
+            echo "Available files in icon.iconset:"
+            ls -la icon.iconset/ || echo "icon.iconset directory not found"
         fi
         
         rm -rf icon.iconset
+        
+        # Verify the icon is properly referenced in Info.plist
+        echo "Verifying icon reference in Info.plist..."
+        if grep -q "CFBundleIconFile" PortManager.app/Contents/Info.plist; then
+            echo "CFBundleIconFile found in Info.plist"
+        else
+            echo "WARNING: CFBundleIconFile not found in Info.plist"
+        fi
+        
+        # List all files in the app bundle for debugging
+        echo "App bundle contents:"
+        find PortManager.app -name "*.icns" -o -name "AppIcon*" | head -10
         
         # Make the app executable
         chmod +x PortManager.app/Contents/MacOS/PortManager
